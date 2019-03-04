@@ -285,30 +285,31 @@ int terminaltest(Board b) {
 }
 
 Board maxval(Board b, int alpha, int beta) {
-	Board v;
-	if (terminaltest(b)) return v;
-	v = -10000000000;
+	Board v,mv;
+	if (terminaltest(b)) return b;
+	v.score = -10000000000;
 	for (int p = b.prep - 5; p < b.prep + 5; p++) {
 		for (int q = b.preq - 5; q < b.preq + 5; q++) {
-			b.board[p][q] = 'O';
-			max(v, minval(b, alpha, beta));
-			if (v >= beta) return v;
-			alpha = max(alpha, v);
+			b.board[p][q] = 1;
+			mv = minval(b,alpha, beta);
+			if (v.score < mv.score) v = mv;
+			if (v.score >= beta) return v;
+			alpha = max(alpha, v.score);
 		}
 	}
 	return v;
 }
 
-int minval(Board b, int alpha, int beta) {
-	int v;
-	if (terminaltest(b)) return v;
-	v = 10000000000;
+Board minval(Board b, int alpha, int beta) {
+	Board v;
+	if (terminaltest(b)) return b;
+	v.score = 10000000000;
 	for (int p = b.prep - 5; p < b.prep + 5; p++) {
 		for (int q = b.preq - 5; q < b.preq + 5; q++) {
-			b.board[p][q] = 'O';
-			min(v, maxval(b, alpha, beta));
-			if (v <= alpha) return v;
-			beta = min(beta, v);
+			b.board[p][q] = -1;
+			min(v.score, maxval(b, alpha, beta).score);
+			if (v.score <= alpha) return v;
+			beta = min(beta, v.score);
 		}
 	}
 	return v;
@@ -328,11 +329,8 @@ void player() {
 }
 
 void comp() {
-	int p, q;
-	preBoard = mainBoard;
-	printf("Enter row and column number: ");
-	scanf_s("%d %d", &p, &q);
-	mainBoard.board[p][q] = -1;
+	Board abBoard=alphabeta(mainBoard);
+	mainBoard.board[abBoard.prep][abBoard.preq] = -1;
 }
 
 int main() {

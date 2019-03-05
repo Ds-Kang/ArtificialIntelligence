@@ -301,13 +301,14 @@ Board maxval(Board b, int alpha, int beta) {
 }
 
 Board minval(Board b, int alpha, int beta) {
-	Board v;
+	Board v,mv;
 	if (terminaltest(b)) return b;
 	v.score = 10000000000;
 	for (int p = b.prep - 5; p < b.prep + 5; p++) {
 		for (int q = b.preq - 5; q < b.preq + 5; q++) {
 			b.board[p][q] = -1;
-			min(v.score, maxval(b, alpha, beta).score);
+			mv = maxval(b, alpha, beta);
+			if (v.score > mv.score) v = mv;
 			if (v.score <= alpha) return v;
 			beta = min(beta, v.score);
 		}
@@ -326,6 +327,7 @@ void player() {
 	printf("Enter row and column number: ");
 	scanf_s("%d %d", &p, &q);
 	mainBoard.board[p][q] = 1;
+	mainBoard.score += totalscore(mainBoard, preBoard, p, q);
 }
 
 void comp() {

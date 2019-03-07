@@ -17,7 +17,7 @@ typedef struct {
 Board mainBoard;
 
 void initboard();
-void printboard();
+void printboard(Board b);
 int scorecal(Linescore score);
 int rowscore(Board b, int p, int q);
 int colscore(Board b, int p, int q);
@@ -37,9 +37,9 @@ int main() {
 
 	while (1) {
 		player();
-		printboard();
+		printboard(mainBoard);
 		comp();
-		printboard();
+		printboard(mainBoard);
 	}
 
 	return 0;
@@ -54,11 +54,11 @@ void initboard() {
 	mainBoard.score = 0;
 }
 
-void printboard() {
+void printboard(Board b) {
 	//   system("cls");
 	for (int i = 0; i < 19; i++) {
 		for (int j = 0; j < 19; j++) {
-			switch (mainBoard.board[i][j])
+			switch (b.board[i][j])
 			{
 			case 1:
 				printf("O");
@@ -312,7 +312,8 @@ int terminaltest(Board b) {
 	return 1;
 }
 
-int taken_check(Board b,int p,int q) {
+int taken_check(Board b,int p,int q) 
+{
 	if (b.board[p][q] != 0) return 1;
 	return 0;
 }
@@ -323,14 +324,17 @@ Board maxval(Board b, int alpha, int beta,int depth) {
 	if (depth == 3) return b;
 	if (terminaltest(b)) return b;
 	v.score = -1000000;
-	for (int p = 0; p < 19; p++) {
-		for (int q =0; q < 19; q++) {
+	for (int p = b.prep-3; p < b.prep + 3; p++) {
+		for (int q = b.preq - 3; q < b.preq + 3; q++) {
 			Board preBoard = mainBoard;
-			printf("%d %d\n", b.prep, b.preq);
-			if (taken_check(b, p, q)) continue;
+			if (p < 0 || p>18 || q < 0 || q>18) {
+				continue;
+			}
+			else if (taken_check(b, p, q)) continue;
 			b.prep = p;
 			b.preq = q;
-			b.board[p][q] = 1;
+			b.board[p][q] = -1;
+			printboard(b);
 			b.score += totalscore(b, preBoard, p, q);
 			mv = minval(b, alpha, beta, depth);
 			if (v.score < mv.score) v = mv;
@@ -347,13 +351,14 @@ Board minval(Board b, int alpha, int beta, int depth) {
 	if (depth == 3) return b;
 	if (terminaltest(b)) return b;
 	v.score = 1000000;
-	for (int p = 0; p < 19; p++) {
-		for (int q = 0; q < 19; q++) {
+	for (int p = b.prep - 3; p < b.prep + 3; p++) {
+		for (int q = b.preq - 3; q < b.preq + 3; q++) {
 			Board preBoard = mainBoard;
-			if (taken_check(b, p, q)) continue;
+			if (p < 0 || p>18 || q < 0 || q>18) continue;
+			else if (taken_check(b, p, q)) continue;
 			b.prep = p;
 			b.preq = q;
-			b.board[p][q] = -1;
+			b.board[p][q] = 1;
 			b.score -= totalscore(b, preBoard, p, q);
 			mv = maxval(b, alpha, beta, depth);
 			if (v.score > mv.score) v = mv;
@@ -384,5 +389,6 @@ void comp() {
 	Board abBoard = alphabeta(mainBoard);
 	mainBoard.prep = abBoard.prep;
 	mainBoard.preq = abBoard.preq;
+	printf("%d %d\n", abBoard.prep, abBoard.preq);
 	mainBoard.board[abBoard.prep][abBoard.preq] = -1;
 }

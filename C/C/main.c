@@ -320,6 +320,7 @@ int taken_check(Board b,int p,int q)
 
 Board maxval(Board b, int alpha, int beta,int depth) {
 	Board v, mv;
+	int a;
 	depth++;
 	if (depth == 3) return b;
 	if (terminaltest(b)) return b;
@@ -327,16 +328,20 @@ Board maxval(Board b, int alpha, int beta,int depth) {
 	for (int p = b.prep-3; p < b.prep + 3; p++) {
 		for (int q = b.preq - 3; q < b.preq + 3; q++) {
 			Board preBoard = mainBoard;
+			for (int i = 0; i < 20; i++) {
+				for (int j = 0; j < 20; j++) v.board[i][j] = b.board[i][j];
+			}
 			if (p < 0 || p>18 || q < 0 || q>18) {
 				continue;
 			}
 			else if (taken_check(b, p, q)) continue;
-			b.prep = p;
-			b.preq = q;
-			b.board[p][q] = -1;
-			printboard(b);
-			b.score += totalscore(b, preBoard, p, q);
-			mv = minval(b, alpha, beta, depth);
+			printf("maxval\n");
+			v.prep = p;
+			v.preq = q;
+			v.board[p][q] = -1;
+			printboard(v);
+			v.score += totalscore(v, preBoard, p, q);
+			mv = minval(v, alpha, beta, depth);
 			if (v.score < mv.score) v = mv;
 			if (v.score >= beta) return v;
 			alpha = max(alpha, v.score);
@@ -347,6 +352,7 @@ Board maxval(Board b, int alpha, int beta,int depth) {
 
 Board minval(Board b, int alpha, int beta, int depth) {
 	Board v, mv;
+	int a;
 	depth++;
 	if (depth == 3) return b;
 	if (terminaltest(b)) return b;
@@ -354,13 +360,20 @@ Board minval(Board b, int alpha, int beta, int depth) {
 	for (int p = b.prep - 3; p < b.prep + 3; p++) {
 		for (int q = b.preq - 3; q < b.preq + 3; q++) {
 			Board preBoard = mainBoard;
+			for (int i = 0; i < 20; i++) {
+				for (int j = 0; j < 20; j++) v.board[i][j] = b.board[i][j];
+			}
+			
 			if (p < 0 || p>18 || q < 0 || q>18) continue;
 			else if (taken_check(b, p, q)) continue;
-			b.prep = p;
-			b.preq = q;
-			b.board[p][q] = 1;
-			b.score -= totalscore(b, preBoard, p, q);
-			mv = maxval(b, alpha, beta, depth);
+			v.prep = p;
+			v.preq = q;
+			v.board[p][q] = 1;
+			printf("minval\n");
+			printboard(v);
+			v.score -= totalscore(v, preBoard, p, q);
+			mv = maxval(v, alpha, beta, depth);
+			printf("%d\n\n",mv.score);
 			if (v.score > mv.score) v = mv;
 			if (v.score <= alpha) return v;
 			beta = min(beta, v.score);

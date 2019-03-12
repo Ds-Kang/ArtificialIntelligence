@@ -7,6 +7,7 @@ typedef struct {
 	int board[20][20];
 	int score;
 	int prep, preq;
+	int p, q;
 }Board;
 
 typedef struct {
@@ -77,7 +78,7 @@ void printboard(Board b) {
 		}
 		printf("\n");
 	}
-	printf("%d\n", mainBoard.score);
+	printf("%d\n", b.score);
 }
 
 int scorecal(Linescore score) {
@@ -91,16 +92,16 @@ int scorecal(Linescore score) {
 			switch (score.line[cnt])
 			{
 			case 5:
-				sum += 250 * score.side[cnt];
+				sum -= 250 * score.side[cnt];
 				break;
 			case 4:
-				sum += 15 * score.side[cnt];
+				sum -= 15 * score.side[cnt];
 				break;
 			case 3:
-				sum += 4 * score.side[cnt];
+				sum -= 4 * score.side[cnt];
 				break;
 			case 2:
-				sum += 1 * score.side[cnt];
+				sum -= 1 * score.side[cnt];
 				break;
 			}
 			break;
@@ -108,16 +109,16 @@ int scorecal(Linescore score) {
 			switch (score.line[cnt])
 			{
 			case 5:
-				sum += 250 * score.side[cnt];
+				sum -= 250 * score.side[cnt];
 				break;
 			case 4:
-				sum += 50 * score.side[cnt];
+				sum -= 50 * score.side[cnt];
 				break;
 			case 3:
-				sum += 15 * score.side[cnt];
+				sum -= 15 * score.side[cnt];
 				break;
 			case 2:
-				sum += 4 * score.side[cnt];
+				sum -= 4 * score.side[cnt];
 				break;
 			}
 			break;
@@ -325,24 +326,23 @@ int taken_check(Board b,int p,int q)
 
 Board maxval(Board b, int alpha, int beta,int depth) {
 	Board v, mv;
-	int a;
 	depth++;
-	if (depth == 8) return b;
+	v.score = -100000;
+	if (depth == 7) return b;
 	if (terminaltest(b)) return b;
 	for (int p = b.prep-3; p < b.prep + 3; p++) {
 		for (int q = b.preq - 3; q < b.preq + 3; q++) {
-			Board preBoard = mainBoard;
-			v = b;
+			Board postBoard = b;
 			if (p < 0 || p>18 || q < 0 || q>18) {
 				continue;
 			}
 			else if (taken_check(b, p, q)) continue;
-			v.prep = p;
-			v.preq = q;
-			v.board[p][q] = -1;
-			v.score = totalscore(v, preBoard, p, q,-1);
-			mv = minval(v, alpha, beta, depth);
-			if (v.score < mv.score) v = mv;
+			postBoard.board[p][q] = -1;
+			postBoard.p = p;
+			postBoard.q = q;
+			postBoard.score = totalscore(postBoard, b, p, q, -1);
+			mv = minval(postBoard, alpha, beta, depth);
+			if (v.score < mv.score)	v = mv;
 			if (v.score >= beta) return v;
 			alpha = max(alpha, v.score);
 		}
@@ -352,21 +352,20 @@ Board maxval(Board b, int alpha, int beta,int depth) {
 
 Board minval(Board b, int alpha, int beta, int depth) {
 	Board v, mv;
-	int a;
 	depth++;
-	if (depth == 8) return b;
+	v.score = 10000000;
+	if (depth == 7) return b;
 	if (terminaltest(b)) return b;
 	for (int p = b.prep - 3; p < b.prep + 3; p++) {
 		for (int q = b.preq - 3; q < b.preq + 3; q++) {
-			Board preBoard = mainBoard;
-			v = b;
+			Board postBoard = b;
 			if (p < 0 || p>18 || q < 0 || q>18) continue;
 			else if (taken_check(b, p, q)) continue;
-			v.prep = p;
-			v.preq = q;
-			v.board[p][q] = 1;
-			v.score = totalscore(v, preBoard, p, q, 1);
-			mv = maxval(v, alpha, beta, depth);
+			postBoard.board[p][q] = 1;
+			postBoard.p = p;
+			postBoard.q = q;
+			postBoard.score = totalscore(postBoard, b, p, q, 1);
+			mv = maxval(postBoard, alpha, beta, depth);
 			if (v.score > mv.score) v = mv;
 			if (v.score <= alpha) return v;
 			beta = min(beta, v.score);
@@ -376,7 +375,7 @@ Board minval(Board b, int alpha, int beta, int depth) {
 }
 
 Board alphabeta(Board state) {
-	Board v = maxval(state, -10000000000, 10000000000,0);
+	Board v = minval(state, -10000000000, 10000000000,0);
 	return v;
 }
 
@@ -392,12 +391,12 @@ void player() {
 }
 
 void comp() {
+	Board preBoard = mainBoard;
 	Board abBoard = alphabeta(mainBoard);
-	mainBoard.prep = abBoard.prep;
-	mainBoard.preq = abBoard.preq;
+	preBoard = mainBoard;
+	mainBoard.prep = abBoard.p;
+	mainBoard.preq = abBoard.q;
 	printboard(abBoard);
-	printf("%d\n", diagscore2(mainBoard, abBoard.prep, abBoard.preq));
-	mainBoard.score = totalscore(mainBoard, abBoard, abBoard.prep, abBoard.preq, -1);
-	mainBoard.board[abBoard.prep][abBoard.preq] = -1;
-
+	mainBoard.board[abBoard.p][abBoard.q] = -1;
+	mainBoard.score = totalscore(mainBoard, preBoard, abBoard.p, abBoard.q, -1);
 }

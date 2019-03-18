@@ -6,8 +6,8 @@
 typedef struct {
 	int board[20][20];
 	int score;
-	int prep, preq;
-	int p, q;
+	int p[400];
+	int q[400];
 }Board;
 
 typedef struct {
@@ -17,6 +17,7 @@ typedef struct {
 }Linescore;
 
 Board mainBoard;
+int move_num;
 
 void initboard();
 void printboard(Board b);
@@ -25,7 +26,7 @@ int rowscore(Board b, int p, int q);
 int colscore(Board b, int p, int q);
 int diagscore1(Board b, int p, int q);
 int diagscore2(Board b, int p, int q);
-int totalscore(Board b, Board preb, int p, int q,int turn);
+int totalscore(Board b, Board preb, int p, int q);
 int terminaltest(Board b);
 Board maxval(Board b, int alpha, int beta, int depth);
 Board minval(Board b, int alpha, int beta, int depth);
@@ -54,6 +55,7 @@ void initboard() {
 		}
 	}
 	mainBoard.score = 0;
+	move_num = 0;
 }
 
 void printboard(Board b) {
@@ -78,7 +80,7 @@ void printboard(Board b) {
 		}
 		printf("\n");
 	}
-	printf("%d\n", b.score);
+	printf("Board의 점수는 %d\n", b.score);
 }
 
 int scorecal(Linescore score) {
@@ -95,7 +97,7 @@ int scorecal(Linescore score) {
 				sum -= 250 * score.side[cnt];
 				break;
 			case 4:
-				sum -= 15 * score.side[cnt];
+				sum -= 30 * score.side[cnt];
 				break;
 			case 3:
 				sum -= 4 * score.side[cnt];
@@ -137,13 +139,14 @@ int rowscore(Board b, int p, int q) {
 		if (b.board[i][q] != 0) {
 			int block;
 			int line = 1;
+			int blank = 0;
 			int now = b.board[i][q];
 
 			if (i == 0 || b.board[i - 1][q] != 0) block = 1;
 			else block = 0;
 
 			i++;
-			while (line<5) {
+			while ((blank+line)<5) {
 				if (b.board[i][q] == 0 && b.board[i + 1][q] == 0) {
 					break;
 				}
@@ -151,7 +154,10 @@ int rowscore(Board b, int p, int q) {
 					block++;
 					break;
 				}
-				else {
+				else if (b.board[i][q] == 0) {
+					blank++;
+				}
+				else{
 					line++;
 				}
 				i++;
@@ -170,6 +176,7 @@ int colscore(Board b, int p, int q) {
 	Linescore score = { NULL,NULL };
 	int cnt = 0;
 	int lscore;
+	int blank = 0;
 
 	for (int i = 0; i < 19; i++) {
 		if (b.board[p][i] != 0) {
@@ -182,13 +189,16 @@ int colscore(Board b, int p, int q) {
 			else block = 0;
 
 			i++;
-			while (line<5) {
+			while ((blank + line)<5) {
 				if (b.board[p][i] == 0 && b.board[p][i + 1] == 0) {
 					break;
 				}
 				else if (now == -b.board[p][i]) {
 					block++;
 					break;
+				}
+				else if (b.board[p][i] == 0) {
+					blank++;
 				}
 				else {
 					line++;
@@ -210,6 +220,7 @@ int diagscore1(Board b, int p, int q) {
 	Linescore score = { NULL,NULL };
 	int cnt = 0;
 	int start, end, lscore;
+	int blank = 0;
 	if (p + q < 19) {
 		start = 0;
 		end = p + q;
@@ -231,13 +242,16 @@ int diagscore1(Board b, int p, int q) {
 
 
 			i++;
-			while (line<5) {
+			while ((blank + line)<5) {
 				if (b.board[i][p + q - i] == 0 && b.board[i + 1][p + q - i] == 0) {
 					break;
 				}
 				else if (now == -b.board[i][p + q - i]) {
 					block++;
 					break;
+				}
+				else if (b.board[i][p + q - i] == 0) {
+					blank++;
 				}
 				else {
 					line++;
@@ -258,6 +272,7 @@ int diagscore2(Board b, int p, int q) {
 	Linescore score = {NULL,NULL};
 	int cnt = 0;
 	int start, end, lscore;
+	int blank = 0;
 	if (p < q) {
 		start = 0;
 		end = p - q + 18;
@@ -278,13 +293,16 @@ int diagscore2(Board b, int p, int q) {
 			else block = 0;
 
 			i++;
-			while (line<5) {
+			while ((blank+line)<5) {
 				if (b.board[i][q - p + i] == 0 && b.board[i + 1][q - p + i] == 0) {
 					break;
 				}
 				else if (now == -b.board[i][q - p + i]) {
 					block++;
 					break;
+				}
+				else if (b.board[i][q - p + i] == 0) {
+					blank++;
 				}
 				else {
 					line++;
@@ -302,7 +320,7 @@ int diagscore2(Board b, int p, int q) {
 	return lscore;
 }
 
-int totalscore(Board b, Board preb, int p, int q,int turn) {
+int totalscore(Board b, Board preb, int p, int q) {
 	b.score += rowscore(b, p, q) + colscore(b, p, q) + diagscore1(b, p, q) + diagscore2(b, p, q);
 	b.score -= rowscore(preb, p, q) + colscore(preb, p, q) + diagscore1(preb, p, q) + diagscore2(preb, p, q);
 
@@ -328,19 +346,19 @@ Board maxval(Board b, int alpha, int beta,int depth) {
 	Board v, mv;
 	depth++;
 	v.score = -100000;
-	if (depth == 7) return b;
+	if (depth == 6) return b;
 	if (terminaltest(b)) return b;
-	for (int p = b.prep-3; p < b.prep + 3; p++) {
-		for (int q = b.preq - 3; q < b.preq + 3; q++) {
+	for (int p = b.p[move_num + depth - 1]; p < b.p[move_num + depth - 1] + 3; p++) {
+		for (int q = b.q[move_num + depth - 1]; q < b.q[move_num + depth - 1] + 3; q++) {
 			Board postBoard = b;
 			if (p < 0 || p>18 || q < 0 || q>18) {
 				continue;
 			}
 			else if (taken_check(b, p, q)) continue;
 			postBoard.board[p][q] = -1;
-			postBoard.p = p;
-			postBoard.q = q;
-			postBoard.score = totalscore(postBoard, b, p, q, -1);
+			postBoard.p[move_num + depth] = p;
+			postBoard.q[move_num + depth] = q;
+			postBoard.score = totalscore(postBoard, b, p, q);
 			mv = minval(postBoard, alpha, beta, depth);
 			if (v.score < mv.score)	v = mv;
 			if (v.score >= beta) return v;
@@ -354,17 +372,17 @@ Board minval(Board b, int alpha, int beta, int depth) {
 	Board v, mv;
 	depth++;
 	v.score = 10000000;
-	if (depth == 7) return b;
+	if (depth == 6) return b;
 	if (terminaltest(b)) return b;
-	for (int p = b.prep - 3; p < b.prep + 3; p++) {
-		for (int q = b.preq - 3; q < b.preq + 3; q++) {
+	for (int p = b.p[move_num + depth - 1] - 3; p < b.p[move_num + depth - 1] + 3; p++) {
+		for (int q = b.q[move_num + depth - 1] - 3; q < b.q[move_num + depth - 1] + 3; q++) {
 			Board postBoard = b;
 			if (p < 0 || p>18 || q < 0 || q>18) continue;
 			else if (taken_check(b, p, q)) continue;
 			postBoard.board[p][q] = 1;
-			postBoard.p = p;
-			postBoard.q = q;
-			postBoard.score = totalscore(postBoard, b, p, q, 1);
+			postBoard.p[move_num + depth] = p;
+			postBoard.q[move_num + depth] = q;
+			postBoard.score = totalscore(postBoard, b, p, q);
 			mv = maxval(postBoard, alpha, beta, depth);
 			if (v.score > mv.score) v = mv;
 			if (v.score <= alpha) return v;
@@ -375,7 +393,7 @@ Board minval(Board b, int alpha, int beta, int depth) {
 }
 
 Board alphabeta(Board state) {
-	Board v = minval(state, -10000000000, 10000000000,0);
+	Board v = maxval(state, -100000, 100000,0);
 	return v;
 }
 
@@ -384,19 +402,19 @@ void player() {
 	Board preBoard = mainBoard;
 	printf("Enter row and column number: ");
 	scanf_s("%d %d", &p, &q);
-	mainBoard.prep = p;
-	mainBoard.preq = q;
+	move_num++;
+	mainBoard.p[move_num] = p;
+	mainBoard.q[move_num] = q;
 	mainBoard.board[p][q] = 1;
-	mainBoard.score = totalscore(mainBoard, preBoard, p, q, 1);
+	mainBoard.score = totalscore(mainBoard, preBoard, p, q);
 }
 
 void comp() {
 	Board preBoard = mainBoard;
 	Board abBoard = alphabeta(mainBoard);
 	preBoard = mainBoard;
-	mainBoard.prep = abBoard.p;
-	mainBoard.preq = abBoard.q;
 	printboard(abBoard);
-	mainBoard.board[abBoard.p][abBoard.q] = -1;
-	mainBoard.score = totalscore(mainBoard, preBoard, abBoard.p, abBoard.q, -1);
+	move_num++;
+	mainBoard.board[abBoard.p[move_num]][abBoard.q[move_num]] = -1;
+	mainBoard.score = totalscore(mainBoard, preBoard, abBoard.p[move_num], abBoard.q[move_num]);
 }

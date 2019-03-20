@@ -33,12 +33,15 @@ Board minval(Board b, int alpha, int beta, int depth);
 Board alphabeta(Board state);
 void player();
 void comp();
-
+char* game_end();
 
 int main() {
 	initboard();
-
 	while (1) {
+		if (game_end()) {
+			printf("%s win!\n",game_end());
+			break;
+		}
 		player();
 		printboard(mainBoard);
 		comp();
@@ -46,6 +49,19 @@ int main() {
 	}
 
 	return 0;
+}
+
+char* game_end() {
+	if (mainBoard.score > 150) {
+		return "Computer";
+	}
+	else if (mainBoard.score <  -150) {
+		return "Player";
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 void initboard() {
@@ -132,7 +148,7 @@ int scorecal(Linescore score) {
 }
 
 int rowscore(Board b, int p, int q) {
-	Linescore score = {NULL,NULL};
+	Linescore score = { -1, -1, -1 };
 	int cnt = 0;
 	int lscore;
 	for (int i = 0; i < 19; i++) {
@@ -173,7 +189,7 @@ int rowscore(Board b, int p, int q) {
 }
 
 int colscore(Board b, int p, int q) {
-	Linescore score = { NULL,NULL };
+	Linescore score = { -1, -1, -1 };
 	int cnt = 0;
 	int lscore;
 	int blank = 0;
@@ -217,7 +233,7 @@ int colscore(Board b, int p, int q) {
 }
 
 int diagscore1(Board b, int p, int q) {
-	Linescore score = { NULL,NULL };
+	Linescore score = { -1, -1, -1 };
 	int cnt = 0;
 	int start, end, lscore;
 	int blank = 0;
@@ -269,7 +285,7 @@ int diagscore1(Board b, int p, int q) {
 }
 
 int diagscore2(Board b, int p, int q) {
-	Linescore score = {NULL,NULL};
+	Linescore score = { -1, -1, -1 };
 	int cnt = 0;
 	int start, end, lscore;
 	int blank = 0;
@@ -346,10 +362,10 @@ Board maxval(Board b, int alpha, int beta,int depth) {
 	Board v, mv;
 	depth++;
 	v.score = -100000;
-	if (depth == 6) return b;
+	if (depth == 5) return b;
 	if (terminaltest(b)) return b;
-	for (int p = b.p[move_num + depth - 1]; p < b.p[move_num + depth - 1] + 3; p++) {
-		for (int q = b.q[move_num + depth - 1]; q < b.q[move_num + depth - 1] + 3; q++) {
+	for (int p = b.p[move_num + depth - 1]-5; p < b.p[move_num + depth - 1] + 5; p++) {
+		for (int q = b.q[move_num + depth - 1]-5; q < b.q[move_num + depth - 1] + 5; q++) {
 			Board postBoard = b;
 			if (p < 0 || p>18 || q < 0 || q>18) {
 				continue;
@@ -372,10 +388,10 @@ Board minval(Board b, int alpha, int beta, int depth) {
 	Board v, mv;
 	depth++;
 	v.score = 10000000;
-	if (depth == 6) return b;
+	if (depth == 5) return b;
 	if (terminaltest(b)) return b;
-	for (int p = b.p[move_num + depth - 1] - 3; p < b.p[move_num + depth - 1] + 3; p++) {
-		for (int q = b.q[move_num + depth - 1] - 3; q < b.q[move_num + depth - 1] + 3; q++) {
+	for (int p = b.p[move_num + depth - 1] - 5; p < b.p[move_num + depth - 1] + 5; p++) {
+		for (int q = b.q[move_num + depth - 1] - 5; q < b.q[move_num + depth - 1] + 5; q++) {
 			Board postBoard = b;
 			if (p < 0 || p>18 || q < 0 || q>18) continue;
 			else if (taken_check(b, p, q)) continue;
@@ -400,8 +416,22 @@ Board alphabeta(Board state) {
 void player() {
 	int p, q;
 	Board preBoard = mainBoard;
-	printf("Enter row and column number: ");
-	scanf_s("%d %d", &p, &q);
+	while (1) {
+		printf("Enter row and column number: ");
+		scanf_s("%d %d", &p, &q);
+		if (p < 0 || p>18 || q < 0 || q>18) {
+			printf("Stone out of Board\n");
+			printf("Enter valid number between 0~18\n");
+			continue;
+		}
+		else if (taken_check(mainBoard, p, q)) {
+			printf("Space aready taken\n");
+			continue;
+		}
+		else {
+			break;
+		}
+	}
 	move_num++;
 	mainBoard.p[move_num] = p;
 	mainBoard.q[move_num] = q;
@@ -412,6 +442,7 @@ void player() {
 void comp() {
 	Board preBoard = mainBoard;
 	Board abBoard = alphabeta(mainBoard);
+
 	preBoard = mainBoard;
 	printboard(abBoard);
 	move_num++;
